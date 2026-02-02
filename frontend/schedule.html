@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Моё расписание</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/schedule.css">
+</head>
+
+<body>
+
+    <header class="header"><a href="link to home"><img src="assets/logo.webp" class="header-logo"></a>
+        <hr class="vertical-line"><a href="link to home"><img src="assets/signum.png" class="header-signum"> </a>
+        <button id="logoutBtn" class="logout-btn">Выйти</button>
+    </header>
+    <div id="offlineBanner" class="offline-banner hidden">
+        <span id="offlineText"></span>
+    </div>
+
+    <div class="background-container">
+        <div class="content">
+            <div class="container">
+                <nav class="navigation">
+                    <ol>
+                        <li style="padding-right: px;"><a href="Link to home"><img src="assets/home-image.png"
+                                    class="home-icon"></a></li>
+                        <li><img src="assets/separator.png" class=" home-icon" style="transform: rotate(180deg);"></li>
+                        <li><a href="shedule(this site)" style="text-align: top;">
+                                <pre>Расписание 
+группы</pre>
+                            </a></li>
+                    </ol>
+                </nav>
+                <section class="schedule-container">
+                    <h1>Расписание группы</h1>
+                    <div class="week-navigation">
+                        <button id="btnPrevWeek" class="weekBar">⬅</button>
+                        <span id="weekInfo">Загрузка...</span>
+                        <button id="btnNextWeek" class="weekBar">➡</button>
+                    </div>
+
+                    <div class="schedule-wrapper" id="scheduleWrapper">
+                        <div id="scheduleGrid" class="schedule"></div>
+                        <div id="currentTimeLine" class="current-time-line"></div>
+                        <div id="lessonsLayer" class="lessons-layer"></div>
+                    </div>
+                </section>
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script src="js/api.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/schedule.js"></script>
+</body>
+
+</html>

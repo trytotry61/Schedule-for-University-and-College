@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ-панель</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+
+    h1,
+    h2 {
+      color: #333;
+    }
+
+    section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    input,
+    select,
+    button {
+      padding: 8px;
+      margin: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    button.delete {
+      background: #dc3545;
+    }
+
+    button.delete:hover {
+      background: #c82333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #f8f9fa;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        margin: 10px;
+      }
+
+      section {
+        padding: 15px;
+      }
+
+      table {
+        font-size: 13px;
+        overflow-x: auto;
+        display: block;
+      }
+
+      input,
+      select,
+      button {
+        width: 30%;
+        box-sizing: border-box;
+        margin: 8px 0;
+      }
+
+      #lessonsTable {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .day-grid {
+        border: 1px solid #ccc;
+        padding: 10px;
+      }
+
+      .lesson-block {
+        border: 1px solid #666;
+        margin-bottom: 8px;
+        padding: 6px;
+        background: #f8f8f8;
+      }
+
+      .lesson-block input,
+      .lesson-block select {
+        margin-right: 6px;
+      }
+    }
+
+    .time-grid {
+      display: flex;
+      height: 720px;
+      /* 12 часов × 60px */
+      border: 1px solid #ddd;
+      position: relative;
+    }
+
+    .time-column {
+      width: 70px;
+      border-right: 1px solid #ddd;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .time-slot {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 60px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      padding-left: 5px;
+      color: #666;
+    }
+
+    .lesson-block {
+      position: absolute;
+      background: #e8f0fe;
+      border-left: 4px solid #4285f4;
+      border-radius: 6px;
+      font-size: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .lesson-time {
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 2px;
+    }
+
+    .lesson-subject {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .lesson-meta {
+      font-size: 11px;
+      color: #333;
+    }
+
+    .lesson-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .lesson-column {
+      flex: 1;
+      position: relative;
+      background: repeating-linear-gradient(to bottom,
+          #fafafa 0,
+          #fafafa 29px,
+          #eee 30px);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Админ-панель расписания</h1>
+  <button onclick="logout()" style="position: absolute; top: 20px; right: 10px;width: 100px;">Выйти</button>
+
+  <section id="groupsSection">
+    <h2>Управление группами</h2>
+    <input type="text" id="newGroupName" placeholder="Название группы, например ИС-21">
+    <button onclick="createGroup()">Создать группу</button>
+
+    <h3>Существующие группы</h3>
+    <ul id="groupsList"></ul>
+  </section>
+  <section id="bulkOperations">
+    <h2>Массовые операции</h2>
+
+    <section id="historySection">
+      <h2>История изменений</h2>
+      <button onclick="loadChangeHistory()">Обновить</button>
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Админ</th>
+            <th>Действие</th>
+            <th>Описание</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+    <div>
+      <h3>Скопировать неделю</h3>
+      <select id="copyGroup"></select>
+      <select id="fromWeek">
+        <option value="0">Каждую неделю</option>
+        <option value="1">Чётную</option>
+        <option value="2">Нечётную</option>
+      </select>
+      →
+      <select id="toWeek">
+        <option value="0">Каждую неделю</option>
+        <option value="1">Чётную</option>
+        <option value="2">Нечётную</option>
+      </select>
+      <button onclick="copyWeek()">Скопировать</button>
+    </div>
+    <div style="margin-top: 20px;">
+      <h3>Очистить неделю</h3>
+      <select id="clearGroup"></select>
+      <select id="clearWeek">
+        <option value="0">Каждую неделю</option>
+        <option value="1">Чётную</option>
+        <option value="2">Нечётную</option>
+      </select>
+      <button class="delete" onclick="clearWeek()">Очистить</button>
+    </div>
+    <div style="margin-top: 20px;">
+      <h3>Заменить преподавателя</h3>
+      <select id="replaceGroup"></select>
+      <input type="text" id="oldTeacher" placeholder="Старый преподаватель">
+      <input type="text" id="newTeacher" placeholder="Новый преподаватель">
+      <button onclick="replaceTeacher()">Заменить</button>
+    </div>
+  </section>
+
+  <section id="lessonsSection">
+    <h2>Добавить занятие</h2>
+    <select id="scheduleGroup"></select>
+    <label>Время</label>
+    <input type="time" id="startTime">
+    <input type="time" id="endTime">
+    <input type="text" id="subject" placeholder="Предмет">
+    <select id="lessonTeacher">
+      <option value="">Выберите преподавателя</option>
+    </select>
+    <input type="text" id="room" placeholder="Аудитория">
+    <select id="lessonType">
+      <option value="lecture">Лекция</option>
+      <option value="practice">Практика</option>
+      <option value="lab">Лабораторная</option>
+    </select>
+    <button onclick="addLesson()">Добавить занятие</button>
+    <button onclick="saveScheduleByDay()">💾 Сохранить день</button>
+  </section>
+  <section id="dayEditor">
+    <h2>Редактирование расписания по дате</h2>
+
+    <label>
+      Дата:
+      <input type="date" id="dayEditorDate">
+    </label>
+
+    <button onclick="loadScheduleByDay()">Загрузить день</button>
+  </section>
+
+  <section id="dayGridSection">
+    <h3 id="dayTitle"></h3>
+    <div class="time-grid">
+      <div class="time-column"></div>
+      <div id="dayGrid" class="lesson-column"></div>
+    </div>
+
+    <button onclick="saveScheduleByDay()">💾 Сохранить день</button>
+  </section>
+
+
+
+
+
+
+
+
+
+
+  <script src="js/api.js"></script>
+  <script>
+    /**
+     * @file admin.html — встроенный скрипт
+     * @description Логика админ-панели: управление группами, занятиями, массовыми операциями и историей изменений.
+     * 
+     * Все запросы выполняются через глобальный apiRequest из api.js (с автоматическим refresh токена).
+     * 
+     * Доступно только администратору (защищено на сервере).
+     */
+
+
+    /** Массив дней недели для отображения в таблице занятий */
+    const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+
+    /** Глобальная переменная для хранения списка групп (используется в массовых операциях) */
+    let currentGroups = [];
+    let currentLessons = [];
+    let teachersMap = {};
+
+    /**
+     * Загружает список групп с сервера и заполняет интерфейс
+     */
+    async function loadGroups() {
+      try {
+        const groups = await apiRequest('/api/admin/groups');
+
+        const list = document.getElementById('groupsList');
+        const select = document.getElementById('scheduleGroup');
+        list.innerHTML = '';
+        select.innerHTML = '<option value="">Выберите группу</option>';
+
+        currentGroups = groups;  // Сохраняем для массовых операций
+
+        groups.forEach(g => {
+          // Элемент списка групп с кнопкой удаления
+          const li = document.createElement('li');
+          li.textContent = g.name;
+          const delBtn = document.createElement('button');
+          delBtn.textContent = 'Удалить';
+          delBtn.className = 'delete';
+          delBtn.onclick = () => deleteGroup(g.id);
+          li.appendChild(delBtn);
+          list.appendChild(li);
+
+          // Опция в селекте для добавления занятия
+          const opt = document.createElement('option');
+          opt.value = g.id;
+          opt.textContent = g.name;
+          select.appendChild(opt);
+        });
+
+        // Заполняем селекты в разделе массовых операций
+        populateBulkSelects();
+      } catch (err) {
+        alert('Ошибка загрузки групп: ' + err.message);
+      }
+    }
+    //** Добавляем учителей в список
+    async function loadTeachers() {
+      try {
+        const teachers = await apiRequest('/api/admin/teachers');
+        const select = document.getElementById('lessonTeacher');
+
+        select.innerHTML = '<option value="">Выберите преподавателя</option>';
+        teachersMap = {}; // ← 🔥 ВАЖНО
+
+        teachers.forEach(t => {
+          teachersMap[t.id] = t.full_name;
+
+          const opt = document.createElement('option');
+          opt.value = t.id;
+          opt.textContent = t.full_name;
+          select.appendChild(opt);
+        });
+
+        console.log('teachersMap loaded:', teachersMap);
+      } catch (err) {
+        alert('Ошибка загрузки преподавателей');
+      }
+    }
+
+
+
+    /**
+     * Создаёт новую группу
+     */
+    async function createGroup() {
+      const name = document.getElementById('newGroupName').value.trim();
+      if (!name) return alert('Введите название');
+      try {
+        await apiRequest('/api/admin/groups', {
+          method: 'POST',
+          body: JSON.stringify({ name })
+        });
+        document.getElementById('newGroupName').value = '';
+        loadGroups();
+        loadLessons();
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      }
+    }
+
+    /**
+     * Удаляет группу по ID (с подтверждением)
+     */
+    async function deleteGroup(id) {
+      if (!confirm('Удалить группу и все её занятия? Это действие нельзя отменить.')) return;
+      try {
+        await apiRequest(`/api/admin/groups/${id}`, { method: 'DELETE' });
+        loadGroups();
+        loadLessons();
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      }
+    }
+
+    /**
+     * Добавляет новое занятие
+     */
+    function addLesson() {
+      const date = document.getElementById('dayEditorDate').value;
+      const groupId = document.getElementById('scheduleGroup').value;
+
+      if (!date || !groupId) {
+        alert('Сначала выберите дату и группу');
+        return;
+      }
+
+      const start_time = document.getElementById('startTime').value;
+      const end_time = document.getElementById('endTime').value;
+      const subject = document.getElementById('subject').value;
+      const room = document.getElementById('room').value;
+      const type = document.getElementById('lessonType').value;
+      const teacher_id = document.getElementById('lessonTeacher').value || null;
+
+      if (!start_time || !end_time || !subject) {
+        alert('Заполните обязательные поля занятия');
+        return;
+      }
+
+      currentLessons.push({
+        start_time,
+        end_time,
+        subject,
+        room,
+        type,
+        teacher_id: teacher_id ? Number(teacher_id) : null
+      });
+
+      renderTimeGrid();
+    }
+
+
+    /**
+     * Загружает и отображает все занятия
+     */
+    async function loadLessons() {
+      try {
+        const lessons = await apiRequest('/api/admin/lessons');
+        const tbody = document.querySelector('#lessonsTable tbody');
+        tbody.innerHTML = '';
+
+        lessons.forEach(l => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+          <td>${l.group_name}</td>
+          <td>${days[l.day]}</td>
+          <td>${l.start_time} - ${l.end_time}</td>
+          <td>${l.subject}</td>
+          <td>${l.teacher}</td>
+          <td>${l.room}</td>
+          <td>${l.type}</td>
+          <td>${l.week === 0 ? 'каждую' : l.week === 1 ? 'чётная' : 'нечётная'}</td>
+          <td><button class="delete" onclick="deleteLesson(${l.id})">Удалить</button></td>
+        `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        alert('Ошибка загрузки занятий: ' + err.message);
+      }
+    }
+
+    /**
+     * Удаляет занятие по ID (с подтверждением)
+     */
+    async function deleteLesson(id) {
+      if (!confirm('Удалить занятие?')) return;
+      try {
+        await apiRequest(`/api/admin/lessons/${id}`, { method: 'DELETE' });
+        loadLessons();
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      }
+    }
+    //** Загрузка дня
+    async function loadScheduleByDay() {
+      const date = document.getElementById('dayEditorDate').value;
+      const groupId = document.getElementById('scheduleGroup').value;
+
+      if (!date || !groupId) {
+        alert('Выберите дату и группу');
+        return;
+      }
+
+      const data = await apiRequest(
+        `/api/schedule/day?date=${date}&groupId=${groupId}`
+      );
+
+      currentLessons = data.lessons || [];
+
+      renderTimeGrid();
+    }
+
+
+
+
+    /**
+     * Копирует занятия с одной недели на другую
+     */
+    async function copyWeek() {
+      const groupId = document.getElementById('copyGroup').value;
+      const from = Number(document.getElementById('fromWeek').value);
+      const to = Number(document.getElementById('toWeek').value);
+
+      if (!groupId || from === to) return alert('Выберите группу и разные недели');
+
+      if (!confirm(`Скопировать занятия группы с недели ${from} на ${to}? Целевая неделя будет перезаписана.`)) return;
+
+      try {
+        await apiRequest('/api/admin/lessons/copy-week', {
+          method: 'POST',
+          body: JSON.stringify({ group_id: groupId, from_week: from, to_week: to })
+        });
+        alert('Неделя скопирована!');
+        loadLessons();
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      }
+    }
+
+    /**
+     * Очищает все занятия группы на выбранной неделе
+     */
+    async function clearWeek() {
+      const groupId = document.getElementById('clearGroup').value;
+      const weekStr = document.getElementById('clearWeek').value;
+
+      if (!groupId || !weekStr) return alert('Выберите группу и неделю');
+
+      const week = Number(weekStr);
+
+      if (!confirm('Удалить ВСЕ занятия этой недели? Это нельзя отменить!')) return;
+
+      try {
+        await apiRequest('/api/admin/lessons/clear-week', {
+          method: 'DELETE',
+          body: JSON.stringify({ group_id: Number(groupId), week: week })
+        });
+        alert('Неделя очищена!');
+        loadLessons();
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      }
+    }
+
+    /**
+     * Заменяет преподавателя во всех занятиях группы
+     */
+    async function replaceTeacher() {
+      const groupId = document.getElementById('replaceGroup').value;
+      const oldT = document.getElementById('oldTeacher').value.trim();
+      const newT = document.getElementById('newTeacher').value.trim();
+
+      if (!groupId || !oldT || !newT) return alert('Заполните все поля');
+
+      if (!confirm(`Заменить "${oldT}" на "${newT}" во всех занятиях группы?`)) return;
+
+      try {
+        await apiRequest('/api/admin/lessons/replace-teacher', {
+          method: 'PATCH',
+          body: JSON.stringify({ group_id: groupId, old_teacher: oldT, new_teacher: newT })
+        });
+        alert('Преподаватель заменён!');
+        loadLessons();
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
+      }
+    }
+
+    /**
+     * Заполняет селекты массовых операций списком групп
+     */
+    function populateBulkSelects() {
+      const selects = ['copyGroup', 'clearGroup', 'replaceGroup'];
+
+      selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Выберите группу</option>';
+
+        currentGroups.forEach(g => {
+          const opt = document.createElement('option');
+          opt.value = g.id;
+          opt.textContent = g.name;
+          select.appendChild(opt);
+        });
+      });
+    }
+
+    /**
+     * Загружает и отображает историю изменений (аудит-лог)
+     */
+    async function loadChangeHistory() {
+      try {
+        const history = await apiRequest('/api/admin/audit');
+        const tbody = document.querySelector('#historyTable tbody');
+        tbody.innerHTML = '';
+
+        history.forEach(h => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+          <td>${new Date(h.changed_at).toLocaleString('ru')}</td>
+          <td>${h.admin_email}</td>
+          <td>${h.action_type}</td>
+          <td>${h.description}</td>
+        `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        alert('Ошибка загрузки истории: ' + err.message);
+      }
+    }
+
+
+    function removeLesson(index) {
+      currentLessons.splice(index, 1);
+      renderTimeGrid();
+    }
+    async function saveScheduleByDay() {
+      const date = document.getElementById('dayEditorDate').value;
+      const groupId = document.getElementById('scheduleGroup').value;
+
+      await apiRequest('/api/schedule/day', {
+        method: 'PUT',
+        body: JSON.stringify({
+          date,
+          groupId,
+          lessons: currentLessons
+        })
+      });
+
+      alert('Расписание сохранено');
+    }
+    async function loadDayGrid() {
+      const date = document.getElementById('scheduleDate').value;
+      const groupId = document.getElementById('scheduleGroup').value;
+
+      if (!date || !groupId) {
+        alert('Выберите дату и группу');
+        return;
+      }
+
+      const data = await apiRequest(
+        `/api/schedule/day?date=${date}&groupId=${groupId}`
+      );
+
+      currentLessons = data.lessons || [];
+
+      document.getElementById('dayGridSection').style.display = 'block';
+      document.getElementById('dayTitle').textContent =
+        `Расписание на ${date}`;
+
+      renderTimeGrid();
+    }
+    function timeToMinutes(time) {
+      const [h, m] = time.split(':').map(Number);
+      return h * 60 + m;
+    }
+    function overlaps(a, b) {
+      return (
+        timeToMinutes(a.start_time) < timeToMinutes(b.end_time) &&
+        timeToMinutes(b.start_time) < timeToMinutes(a.end_time)
+
+      );
+    }
+    function buildOverlapGroups(lessons) {
+      const groups = [];
+
+      lessons.forEach(lesson => {
+        let placed = false;
+
+        for (const group of groups) {
+          if (group.some(l => overlaps(l, lesson))) {
+            group.push(lesson);
+            placed = true;
+            break;
+          }
+        }
+
+        if (!placed) {
+          groups.push([lesson]);
+        }
+      });
+
+      return groups;
+    }
+
+    function assignColumns(group) {
+      const columns = [];
+
+      group.forEach(lesson => {
+        let col = 0;
+
+        while (
+          columns[col]?.some(l => overlaps(l, lesson))
+        ) {
+          col++;
+        }
+
+        if (!columns[col]) columns[col] = [];
+        columns[col].push(lesson);
+
+        lesson._col = col;
+        lesson._cols = columns.length;
+      });
+    }
+
+    function renderTimeGrid() {
+      const grid = document.getElementById('dayGrid');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+
+      const startDay = 8 * 60;
+      const endDay = 20 * 60;
+      const pxPerMinute = 1;
+
+      // временные линии
+      for (let t = startDay; t <= endDay; t += 60) {
+        const slot = document.createElement('div');
+        slot.className = 'time-slot';
+        slot.style.top = `${t - startDay}px`;
+        slot.textContent = `${String(t / 60).padStart(2, '0')}:00`;
+        grid.appendChild(slot);
+      }
+
+      // 🔥 НОВОЕ: обработка пересечений
+      const groups = buildOverlapGroups([...currentLessons]);
+
+      groups.forEach(group => {
+        assignColumns(group);
+
+        group.forEach(lesson => {
+          const top =
+            timeToMinutes(lesson.start_time) - startDay;
+          const height =
+            timeToMinutes(lesson.end_time) -
+            timeToMinutes(lesson.start_time);
+
+          const widthPercent = 100 / lesson._cols;
+          const leftPercent = lesson._col * widthPercent;
+
+          const teacherName = lesson.teacher_id
+            ? teachersMap[lesson.teacher_id] || '—'
+            : '—';
+
+          const block = document.createElement('div');
+          block.className = 'lesson-block';
+          block.style.top = `${top}px`;
+          block.style.height = `${height}px`;
+          block.style.left = `${leftPercent}%`;
+          block.style.width = `${widthPercent}%`;
+
+          block.innerHTML = `
+  <div class="lesson-time">
+    ${lesson.start_time} – ${lesson.end_time}
+  </div>
+
+  <div class="lesson-subject">
+    ${lesson.subject}
+  </div>
+
+  <div class="lesson-meta">
+    <span>👨‍🏫 ${teacherName}</span><br>
+    <span>🏫 ауд. ${lesson.room}</span><br>
+    <span>📘 ${lesson.type}</span>
+  </div>
+
+  <button class="lesson-remove"
+    onclick="removeLesson(${currentLessons.indexOf(lesson)})">
+    ✕
+  </button>
+`;
+
+
+
+
+
+
+          grid.appendChild(block);
+        });
+      });
+    }
+    async function loadAudit() {
+      const logs = await apiRequest('/api/admin/audit');
+
+      const box = document.getElementById('auditLog');
+      box.innerHTML = '';
+
+      logs.forEach(log => {
+        const div = document.createElement('div');
+        div.className = 'audit-item';
+
+        div.innerHTML = `
+      <b>${log.changed_at}</b><br>
+      👤 ${log.admin_email}<br>
+      ⚙️ ${log.action_type}<br>
+      🎯 ${log.target_type} ${log.target_id ?? ''}
+      <hr>
+    `;
+
+        box.appendChild(div);
+      });
+    }
+
+
+
+
+
+
+
+
+
+
+    // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
+    loadChangeHistory();
+    loadGroups();
+    loadLessons();
+    loadTeachers();
+
+  </script>
+</body>
+
+</html>

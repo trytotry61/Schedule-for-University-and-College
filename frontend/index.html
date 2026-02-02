@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Вход в систему</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+
+<body>
+    <header class="header"><a href="link to home"><img src="assets/logo.webp" class="header-logo"></a>
+        <hr class="vertical-line"><a href="link to home"><img src="assets/signum.png" class="header-signum"> </a>
+    </header>
+    <div class="background-container">
+        <div class="content">
+            <div class="container">
+                <div class="loginForm">
+                    <img src="assets/registration-logo.webp" class="registration-logo">
+                    <h1 style="text-align: center;">Авторизация</h1>
+                    <form id="loginForm">
+                        <div align="center" id="loginBox">
+                            <table>
+                                <tr>
+                                    <td><label style="font-size: 12px;">Логин*</label></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="text" id="emailInput" required></td>
+                                </tr>
+                                <tr>
+                                    <td><label style="font-size: 12px;">Пароль*</label></td>
+                                </tr>
+                                <tr>
+                                    <td><input type="password" id="passwordInput" required></td>
+                                </tr>
+                                <tr>
+                                    <td align="center"> <button type="submit" id="loginBtn">Войти</button></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <p id="loginError" style="color: red;"></p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+
+
+</body>
+
+</html>
